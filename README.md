@@ -9,6 +9,8 @@ Vehicle inventory and personal sourcing website, with dedicated sourcing, inspec
 
 Vehicle information is in `lib/vehicles.ts`. Gallery focal points and responsive-image paths are in `lib/image-presentation.ts`. The homepage and Inventory share `components/vehicle-card.tsx` for consistent mouse, keyboard and touch previews. Optimized image assets are included in `public/optimized/`.
 
+Vercel uses the Next.js build configured in `vercel.json` (`next build --webpack`), producing the `.next` output required by its Next.js adapter. The local preview and Cloudflare build continue to use Vinext. To verify the Vercel build locally, run `npx next build --webpack`.
+
 ## Platform runtime
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
