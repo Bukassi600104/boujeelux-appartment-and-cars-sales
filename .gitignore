@@ -44,3 +44,10 @@ next-env.d.ts
 /.codex/
 /outputs/
 /work/
+# Local previews, source-image provenance and reference exports
+/.openai/previews/
+/.openai/photo-retouch-manifest.json
+/.stitch-reference/
+/chida-homepage.tar.gz
+*.tsbuildinfo
+/scripts/prepare-gallery-retouches.mjs

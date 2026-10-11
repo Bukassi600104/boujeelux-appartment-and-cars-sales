@@ -1,4 +1,15 @@
-# vinext-starter
+# Chida Moore Automobiles
+
+Vehicle inventory and personal sourcing website, with dedicated sourcing, inspection, about and contact pages.
+
+- `npm run install:ci` installs dependencies from the lockfile.
+- `npm run dev` starts the local website at http://localhost:5173.
+- `npm run build` builds the production application.
+- `npx tsc --noEmit` checks TypeScript.
+
+Vehicle information is in `lib/vehicles.ts`. Gallery focal points and responsive-image paths are in `lib/image-presentation.ts`. The homepage and Inventory share `components/vehicle-card.tsx` for consistent mouse, keyboard and touch previews. Optimized image assets are included in `public/optimized/`.
+
+## Platform runtime
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 
