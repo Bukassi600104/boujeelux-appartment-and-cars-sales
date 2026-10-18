@@ -15,3 +15,12 @@ test('shared upload path sends only normalized output and keeps source file unch
   assert.equal(await source.text(),'original');
   assert.equal(result.photo.label,'Property view');
 });
+
+test('each selected file keeps its own upload name, saved URL and input order',async()=>{
+  const files=[new File(['first'],'living room.jpg',{type:'image/jpeg'}),new File(['second'],'bedroom.png',{type:'image/png'})];
+  const sent:string[]=[];
+  const results=[];
+  for(const file of files)results.push(await runNormalizedUpload(file,'Suite',undefined,{normalize:async()=>({base64:`normalized-${file.name}`,type:'image/webp' as const,width:1200,height:900,warning:''}),send:async payload=>{sent.push(payload.name);return{src:`/api/media/${payload.name}`};}}));
+  assert.deepEqual(sent,['living room.webp','bedroom.webp']);
+  assert.deepEqual(results.map(result=>result.photo.src),['/api/media/living room.webp','/api/media/bedroom.webp']);
+});

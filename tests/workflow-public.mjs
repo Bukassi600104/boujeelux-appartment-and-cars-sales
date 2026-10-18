@@ -87,7 +87,9 @@ test("sourcing workflow respects the CMS service toggle", async () => {
   assert.match(component, /!settings\.sourcingEnabled/);
 });
 test('homepage About copy is controlled by the same CMS settings as the About page', async () => {
-  const home = await readFile(new URL('../app/page.tsx', import.meta.url), 'utf8');
+  const route = await readFile(new URL('../app/page.tsx', import.meta.url), 'utf8');
+  assert.match(route,/<HomeView snapshot=\{await getPublicContent\(\)\}/);
+  const home = await readFile(new URL('../components/home-view.tsx', import.meta.url), 'utf8');
   assert.match(home, /<h2>\{settings\.aboutTitle\}<\/h2>/);
   assert.match(home, /<p>\{settings\.aboutText\}<\/p>/);
 });

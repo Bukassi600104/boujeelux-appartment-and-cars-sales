@@ -5,12 +5,12 @@ import process from 'node:process';
 const root=process.cwd();
 const sourceDir=path.join(root,'shared-cms');
 const targetDir=path.join(root,'supabase','functions','dual-cms');
-const names=['core.mjs','repository.mjs','validation.mjs'];
+const names=['core.mjs','repository.mjs','validation.mjs','publication.mjs','click-report.mjs'];
 const check=process.argv.includes('--check');
 await mkdir(targetDir,{recursive:true});
 const index=await readFile(path.join(targetDir,'index.ts'),'utf8');
 for(const name of names){
-  if(!index.includes(`./${name}`) && name!=='validation.mjs')throw new Error(`Edge entrypoint does not import ${name}`);
+  if(['core.mjs','repository.mjs'].includes(name)&&!index.includes(`./${name}`))throw new Error(`Edge entrypoint does not import ${name}`);
   const source=await readFile(path.join(sourceDir,name));
   const target=path.join(targetDir,name);
   if(check){

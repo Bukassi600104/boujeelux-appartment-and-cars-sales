@@ -1,31 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
-import { ArrowUpRight, Check, MessageCircle } from "lucide-react";
-import { ServiceShowcase } from "@/components/service-showcase";
-import { InventoryCarousel } from "@/components/inventory-carousel";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
-import { SourcingForm } from "@/components/sourcing-form";
-import { ScrollEntrances } from "@/components/scroll-entrances";
-import { getPublicContent } from "@/lib/cms/store";
-import { pageMetadata,getPublicSiteUrl } from "@/lib/seo";
-export async function generateMetadata(){const {settings}=await getPublicContent();return pageMetadata("/",settings.seoTitle,settings.seoDescription,settings.heroImage,getPublicSiteUrl(settings));}
-
-export default async function Home() {
-  const {vehicles,settings}=await getPublicContent();const contact=settings.contact;const heroVehicle=vehicles.find(v=>v.slug===settings.heroVehicleSlug);const featuredVehicles=vehicles.filter(v=>v.featured);
-  return <main className="page-shell" id="main-content"><link rel="preload" as="image" href={settings.heroImage} fetchPriority="high" /><SiteHeader /><ScrollEntrances />
-    <section className="editorial-hero" style={{backgroundImage:`url("${settings.heroImage}")`}} aria-labelledby="hero-title"><div className="content-width">
-      <div className="hero-editorial-layout">
-      <div className="editorial-hero-copy"><h1 id="hero-title">{settings.heroTitle.includes("Your Way.")?<>{settings.heroTitle.replace("Your Way.","")}<br/><em>Your Way.</em></>:settings.heroTitle}</h1><p>{settings.heroSubtitle}</p><div className="hero-actions"><a className="gold-button" href="/inventory">Browse the collection <ArrowUpRight size={17} /></a><a className="secondary-button" href="/sourcing">Source a vehicle <span aria-hidden="true">↓</span></a></div></div>
-      <aside className="hero-vehicle-title"><span className="hero-model-year">Collection highlight</span>{heroVehicle&&<><h2>{heroVehicle.make}<br/><em>{heroVehicle.name.replace(heroVehicle.year,"").replace(heroVehicle.make,"").trim()}</em></h2><a className="hero-explore-link" href={`/vehicles/${heroVehicle.slug}`}>Explore this vehicle <ArrowUpRight size={17}/></a></>}<div className="hero-title-notes"><span>Premium vehicles,<br />personally selected</span><span>Direct sales enquiries</span></div><div className="hero-sales-guidance"><small>Your next step</small><p>Personal sales guidance</p><a href="/contact">Speak with our team <ArrowUpRight size={15}/></a></div></aside>
-      </div>
-      <div className="make-strip" aria-label="Selected marques"><p>Selected marques</p><div className="make-list"><img className="marque-lexus" src="/marques/lexus.svg" alt="Lexus" width="180" height="40"/><img src="/marques/mercedes-benz.svg" alt="Mercedes-Benz" width="150" height="70"/><img src="/marques/toyota.svg" alt="Toyota" width="130" height="70"/></div></div>
-    </div></section>
-    <section className="inventory-section section-pad" id="inventory"><div className="content-width"><header className="inventory-header"><div><p className="section-kicker">Available collection</p><h2>Selected vehicles</h2><p>Explore our current selection. Choose a vehicle to view its gallery and enquire.</p></div></header>{featuredVehicles.length?<InventoryCarousel vehicles={featuredVehicles}/>:<p>New vehicles are being prepared. <a href="/inventory">Explore the collection</a> or <a href="/contact">ask our team about current availability.</a></p>}</div></section>
-    <ServiceShowcase />
-    <section className="sourcing-section section-pad" id="sourcing"><div className="content-width"><header className="section-intro"><p className="section-kicker">Vehicle sourcing</p><h2>Can’t find your specification?<br />Tell us what you’re looking for.</h2><p>Share your preferred make, model and budget. Our team can help you explore suitable options.</p><a className="text-link" href="/sourcing">Explore personal sourcing <ArrowUpRight size={16}/></a></header><SourcingForm /></div></section>
-    <section className="inspection-section section-pad" id="inspection"><div className="content-width"><header className="section-intro"><p className="section-kicker">Inspection requests</p><h2>Clarity before commitment.</h2><p>Inspection arrangements are subject to confirmation for each vehicle. Contact the team before making plans.</p></header><div className="inspection-steps">{[["01","Select a vehicle","Explore the collection and choose the vehicle you want to see."],["02","Confirm availability","Ask our sales team about the vehicle and inspection arrangements."],["03","Arrange your inspection","Agree the next step directly with the team once availability is confirmed."]].map(([n,t,p])=><article key={n}><span>{n}</span><h3>{t}</h3><p>{p}</p></article>)}</div><div className="inspection-feature"><div className="inspection-photo"><img src="/inventory/lagos/lexus-nx200t-2014.webp" alt="Lexus NX 200t in a cinematic Lekki, Lagos setting" loading="lazy" /></div><div><p className="section-kicker">A closer look</p><h3>Explore the details that matter.</h3><p>Review the available photographs, then ask about the vehicle’s condition and details with the sales team.</p><ul><li><Check size={17}/> Real vehicle galleries</li><li><Check size={17}/> Direct answers to your questions</li><li><Check size={17}/> Arrangements confirmed with the team</li></ul><a className="gold-button" href="/inspection">Ask about an inspection <ArrowUpRight size={17}/></a></div></div></div></section>
-    <section className="about-section section-pad"><div className="content-width about-home-grid"><div className="about-car-stage"><img src="/inventory/lagos/lexus-lx600.webp" alt="Lexus LX 600 in a cinematic Marina, Lagos setting" loading="lazy"/><span className="car-ground"/><div className="about-image-caption"><small>Chida Moore Automobiles</small><span>A focused selection. A personal approach.</span></div></div><div><p className="section-kicker">About Chida Moore</p><h2>{settings.aboutTitle}</h2><blockquote>A better car buying experience starts with a clear, thoughtful conversation.</blockquote><p>{settings.aboutText}</p><a className="text-link" href="/about">Discover our approach <ArrowUpRight size={17}/></a></div></div></section>
-    <section className="contact-section" id="contact"><div className="content-width contact-banner"><div><p className="section-kicker">Sales enquiries</p><h2>Ready to find your next car?</h2><p>Talk to our team about a vehicle or your sourcing preferences.</p><small>Call / WhatsApp: {contact.whatsapp[0].display}</small></div><a className="gold-button" href="/contact"><MessageCircle size={19}/> Speak with our sales team</a></div></section>
-    <SiteFooter />
-  </main>;
-}
+import {HomeView} from '@/components/home-view';
+import {getPublicContent} from '@/lib/cms/store';
+import {pageMetadata,getPublicSiteUrl} from '@/lib/seo';
+export async function generateMetadata(){const {settings}=await getPublicContent();return pageMetadata('/',settings.seoTitle,settings.seoDescription,settings.heroImage,getPublicSiteUrl(settings));}
+export default async function Home(){return <HomeView snapshot={await getPublicContent()}/>;}

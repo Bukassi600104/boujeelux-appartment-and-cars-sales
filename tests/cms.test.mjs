@@ -49,9 +49,9 @@ test('CMS credentials require a safe username and a long UTF-8 password', () => 
   assert.ok(cms.validateCredentials('owner', 'short password').length);
   assert.ok(cms.validateCredentials('owner', '😀'.repeat(19)).length, 'password bytes, not just characters, are capped');
 });
-test('CMS public snapshots use seed only for a deliberate null content state', () => {
+test('missing persisted content stays empty instead of showing seeded cars', () => {
   const seed={vehicles:[{slug:'seed',status:'published'}],settings:{}};
-  assert.deepEqual(cms.publicSnapshot({content:null,revision:0,updatedAt:null},seed).vehicles.map(v=>v.slug),['seed']);
+  assert.deepEqual(cms.publicSnapshot({content:null,revision:0,updatedAt:null},seed).vehicles,[]);
   const live=cms.publicSnapshot({content:{vehicles:[{slug:'live',status:'published'},{slug:'draft',status:'draft'}],settings:{}},revision:3,updatedAt:'now'},seed);
   assert.deepEqual(live.vehicles.map(v=>v.slug),['live']);
   assert.equal(live.revision,3);

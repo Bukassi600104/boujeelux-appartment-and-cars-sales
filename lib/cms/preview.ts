@@ -1,0 +1,3 @@
+export function previewRedirect(identity:{mustChange:boolean}|null){return !identity?'/admin/login':identity.mustChange?'/admin/credentials':null;}
+export function heroImageVehicle<T extends {slug:string;name:string;make:string;status?:string}>(image:string,vehicles:T[]):T|undefined{return image==='/hero-lexus-sunset.webp'?vehicles.find(vehicle=>vehicle.slug==='lexus-lx-600'&&vehicle.make==='Lexus'&&/\bLX\s*600\b/i.test(vehicle.name)&&(!vehicle.status||vehicle.status==='published')):undefined;}
+export function previewLinkTarget(href:string):string|null{if(/^(?:https?:\/\/(?:wa\.me|api\.whatsapp\.com)|mailto:|tel:)/i.test(href))return null;if(href==='/')return '/admin/preview';if(/^\/vehicles\/[a-z0-9-]+\/?$/.test(href))return '/admin/preview'+href;return href;}

@@ -58,7 +58,7 @@ test('caller data cannot override the fixed CMS routing identity or inject a tok
 });
 
 test('login responses never expose the backend session token',()=>{
-  assert.deepEqual(publicLoginResult({token:'secret',mustChange:true,username:'owner',extra:'hidden'}),{mustChange:true,username:'owner'});
+  assert.deepEqual(publicLoginResult({token:'secret',mustChange:true,username:'owner',role:'owner',extra:'hidden'}),{mustChange:true,username:'owner',role:'owner',permissions:{read:true,write:true,manageAdmins:true,manageListings:true,manageMedia:true,manageWebsiteSettings:true,publishContent:true}});
   assert.equal(isPlainObject(null),false);assert.equal(isPlainObject([]),false);assert.equal(isPlainObject({}),true);
 });
 

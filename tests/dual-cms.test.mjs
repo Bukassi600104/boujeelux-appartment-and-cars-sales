@@ -52,7 +52,7 @@ test('request body limit is enforced in UTF-8 bytes without relying on Content-L
 test('mutable operations receive the authorized session hash for database revalidation', async () => {
   const {createHandler,sha256}=await import('../shared-cms/core.mjs');
   const token='b'.repeat(43), tokenHash=await sha256(token), seen=[];
-  const account={site:'boujeelux',state:'active',must_change:false,epoch:3,username:'owner',user_id:'user-1'};
+  const account={site:'boujeelux',role:'owner',state:'active',must_change:false,epoch:3,username:'owner',user_id:'user-1'};
   const repo={
     session:async()=>({site:'boujeelux',scope:'full',epoch:3,token_hash:tokenHash,expires_at:new Date(Date.now()+600000).toISOString(),last_seen:new Date().toISOString(),account}),
     touch:async()=>{}, validateMedia:async()=>{},
@@ -112,6 +112,16 @@ const carSettings={heroTitle:'Premium cars',heroSubtitle:'Trusted vehicles',hero
 const car=(overrides={})=>({slug:'lexus-rx',name:'Lexus RX',make:'Lexus',year:'2024',image:'/lexus.webp',alt:'Lexus RX exterior',availability:'Available',condition:'Tokunbo',price:'Price on enquiry',priceValue:0,showPrice:false,status:'published',featured:false,description:'',specifications:[],videos:[],gallery:[{src:'/lexus.webp',alt:'Lexus RX exterior',label:'Exterior'}],...overrides});
 const apartment=(photo={src:'/flat.webp',alt:'Living room',illustrative:false})=>({id:'lagos-flat',slug:'lagos-flat',name:'Lagos Flat',subtitle:'',description:'Comfortable apartment',location:'Lagos',address:'',partyRate:'',caution:'',policy:'',availabilityNote:'',bedrooms:1,maxGuests:2,availability:'Available on request',amenities:[],rate:{basis:'quote',currency:'NGN',amount:''},photos:[photo]});
 
+test('authoritative content save rejects unknown fields and malformed gallery/spec rows safely', () => {
+  for(const change of [v=>({...v,gallery:[null]}),v=>({...v,gallery:[{...v.gallery[0],script:'unsafe'}]}),v=>({...v,specifications:[null]}),v=>({...v,administrator:true})]){
+    assert.throws(()=>api.validateContent('chida',{vehicles:[change(car())],settings:structuredClone(carSettings)}),error=>error instanceof api.CmsError&&error.status===400);
+  }
+  const base={records:[{id:'lagos-flat',version:1,draft:apartment(),published:null}]};
+  for(const change of [c=>({...c,administrator:true}),c=>({...c,records:[{...c.records[0],draft:{...apartment(),photos:[{src:'/flat.webp',alt:'Living room',illustrative:false,script:'unsafe'}]}}]})]){
+    assert.throws(()=>api.validateContent('boujeelux',change(structuredClone(base))),error=>error instanceof api.CmsError&&error.status===400);
+  }
+});
+
 test('car public projection redacts hidden numeric prices without mutating private content',()=>{
   const hidden=car({priceValue:42_500_000,showPrice:false,price:'Price on enquiry'});
   const shown=car({slug:'priced-car',priceValue:51_000_000,showPrice:true,price:'₦51,000,000'});
@@ -148,6 +158,9 @@ test('legacy vehicles default restockExpected false and Unavailable remains inde
 });
 
 test('legacy apartment photos remain valid while optional labels are trimmed and bounded', () => {
+  const persistedPhoto={src:'/flat.webp',alt:'Living room',illustrative:false,id:1,caption:'Actual living room',category:'Living area',scope:'property-wide'};
+  const persisted=api.validateContent('boujeelux',{records:[{id:'lagos-flat',version:1,draft:apartment(persistedPhoto),published:null}]});
+  assert.deepEqual(persisted.records[0].draft.photos[0],persistedPhoto,'Preserve approved persisted photo metadata');
   const legacy=api.validateContent('boujeelux',{records:[{id:'lagos-flat',version:1,draft:apartment(),published:null}]});
   assert.equal('label' in legacy.records[0].draft.photos[0],false);
   const labelled=api.validateContent('boujeelux',{records:[{id:'lagos-flat',version:1,draft:apartment({src:'/flat.webp',alt:'Living room',illustrative:false,label:'  Living room  '}),published:null}]});
@@ -183,7 +196,7 @@ test('trackChat is rate limited with bounded source keys', async () => {
 test('metrics requires a full same-site session and returns site-scoped aggregates', async () => {
   const {createHandler,sha256}=await import('../shared-cms/core.mjs');
   const token='m'.repeat(43),hash=await sha256(token),calls=[];
-  const account={site:'chida',state:'active',must_change:false,epoch:1,username:'owner',user_id:'user'};
+  const account={site:'chida',role:'owner',state:'active',must_change:false,epoch:1,username:'owner',user_id:'user'};
   const session={site:'chida',scope:'full',epoch:1,token_hash:hash,expires_at:new Date(Date.now()+600000).toISOString(),last_seen:new Date().toISOString(),account};
   const repo={session:async()=>session,touch:async()=>{},metrics:async(site,sessionHash)=>{calls.push([site,sessionHash]);return {total:3,byListing:[{listingSlug:'lexus-rx',count:3}]};}};
   const handler=createHandler(repo);
