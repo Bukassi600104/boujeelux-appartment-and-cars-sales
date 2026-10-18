@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-const base = 'http://localhost:5173';
+const base = process.env.CHIDA_TEST_URL || 'http://localhost:5173';
 const routes = ['/', '/inventory', '/about', '/contact', '/sourcing', '/inspection'];
 const sitemap = await (await fetch(base + '/sitemap.xml')).text();
 routes.push(...[...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => new URL(m[1]).pathname).filter(p => p.startsWith('/vehicles/')));

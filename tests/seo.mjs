@@ -24,7 +24,7 @@ test("sitemap exposes public routes and vehicle detail URLs without synthetic cl
   assert.doesNotMatch(seo, /rating|reviewCount|mileage|address/i);
 });
 
-test("sitemap route reads published CMS content and uses short dynamic caching", async () => {
+test("sitemap route reads published CMS content without caching publication state", async () => {
   const route = await source("app/sitemap.xml/route.ts");
   assert.match(route, /getPublicContent\(\)/);
   assert.doesNotMatch(route, /seedContent/);
@@ -33,7 +33,8 @@ test("sitemap route reads published CMS content and uses short dynamic caching",
   assert.match(route, /getPublicSiteUrl\(content\.settings\)/);
   assert.match(route, /force-dynamic/);
   assert.match(route, /application\/xml/);
-  assert.match(route, /s-maxage=60/);
+  assert.match(route, /"Cache-Control":\s*"no-store"/);
+  assert.doesNotMatch(route, /s-maxage/);
   assert.doesNotMatch(route, /stale-while-revalidate/);
 });
 
@@ -48,7 +49,7 @@ test("robots allows public crawling and protects admin and API paths", async () 
   assert.match(route, /getPublicContent\(\)/);
   assert.match(route, /getPublicSiteUrl\(content\.settings\)/);
   assert.match(route, /force-dynamic/);
-  assert.match(route, /s-maxage=60/);
+  assert.match(route, /"Cache-Control":\s*"no-store"/);
   assert.match(route, /text\/plain/);
 });
 

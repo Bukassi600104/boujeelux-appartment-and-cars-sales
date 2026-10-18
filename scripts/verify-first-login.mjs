@@ -12,7 +12,7 @@ for(const a of accounts.filter(a=>!selected.length||selected.includes(a.site))){
  const call=(url,method,body,cookie)=>fetch(base+url,{method,redirect:'manual',headers:{Origin:base,...(cookie?{Cookie:cookie}:{}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
  let r=await call(login,'POST',{username:a.nextUsername,password:a.nextPassword});
  assert.equal(r.status,200,`${a.site}: initial login`);const session=await r.json();assert.equal(session.mustChange,true,'QA account must be reset to setup scope by the operator first');assert.ok(!('token' in session));
- const cookie=r.headers.get('set-cookie')?.split(';')[0];assert.ok(cookie);assert.match(r.headers.get('set-cookie'),/HttpOnly/i);assert.match(r.headers.get('set-cookie'),/SameSite=Strict/i);
+ const cookie=r.headers.get('set-cookie')?.split(';')[0];assert.ok(cookie);assert.ok(/HttpOnly/i.test(r.headers.get('set-cookie')??''));assert.ok(/SameSite=Strict/i.test(r.headers.get('set-cookie')??''));
  r=await call('/admin','GET',null,cookie);assert.equal(r.status,307);assert.match(r.headers.get('location'),/\/admin\/credentials$/);
  r=await call(content,car?'GET':'POST',car?null:{},cookie);assert.equal(r.status,428,'setup session cannot access content');
  const username=a.site+'-qa-final',password=randomBytes(24).toString('base64url');
