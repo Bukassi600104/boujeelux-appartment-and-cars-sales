@@ -23,8 +23,8 @@
 
 | Check | Observed result |
 | --- | --- |
-| Chida complete test suite | 80 passed, 0 failed |
-| Boujeelux complete test suite | 56 passed, 0 failed |
+| Chida complete test suite | 82 passed, 0 failed, including dashboard branding/layout and common unsaved-editor guard regressions |
+| Boujeelux complete test suite | 58 passed, 0 failed, including dashboard control contrast and mobile-navigation regressions |
 | TypeScript checks | Both pass |
 | ESLint error checks | Both pass; this does not assert zero warnings |
 | Production builds | Chida Next and Vinext pass; apartments Next passes |
@@ -64,4 +64,10 @@ The generated report is retained locally in the Codex Security scan directory un
 
 ## Deployment gate
 
-At the time this source record was prepared, the shared backend is deployed, but the new frontend GitHub push, both Vercel production builds, the retained Chida Sites deployment and hosted regression checks are the remaining release gate. Client links are held until those checks complete. The deployment evidence will be appended without changing or overstating the sealed security report.
+The core release was pushed to GitHub as `a9dd8b8b956d4c4dfb93fa424a3f5e1796ca0137`. Both Vercel production deployments are READY at that source: car `dpl_5NrFhD9DiyitGSBZJAHe7hRJ5noS`, apartments `dpl_9qcQ9xbULLsfisVhkieC9LS3mZyY`. Retained public Chida Sites version6 deployed successfully as `appgdep_6ad50419af7481918ad6f8703223afcf` from that exact source.
+
+The real hosted car settings/publication/media checks, apartment14 CMS smoke checks, both-site stock/availability/metrics/hidden-price integration checks and fresh client setup-only checks all pass. Catalogues were restored. Hosted car crawl:14 pages,14 links,17 anchors,102 image URLs; apartments:9 pages,8 links,22 images (993,417 image bytes). The retained Sites origin also serves public pages/images and denies anonymous CMS access. An initial apartment crawler request mistakenly retained HTML `&amp;` in an image query; decoding the HTML attribute correctly resolves it, with no application change.
+
+Browser review subsequently identified incomplete Chida dashboard branding/navigation and apartment secondary-control contrast/mobile navigation. These presentation corrections have failing-then-passing regression tests and are being rebuilt/released before client handoff. A common car selector now also protects unsaved gallery/specification text on every vehicle-switch path, including Overview → Manage. Authentication, APIs and catalogue contracts are unchanged. Chrome confirmed live QA sign-in, overview and apartment wizard open/cancel (catalogue remains2). Its file-picker automation is blocked by the ChatGPT extension's local-file permission, which was not weakened. Upload/read/publish API tests pass; a real browser batch-picker/crop check remains an explicit verification limitation, not an assertion of failure or completion. Do not claim physical-mobile or cross-browser coverage from desktop viewport tests.
+
+Client links remain held until the final visual release and hosted setup checks are verified. Test traffic is included in the best-effort aggregate click counts; those counts must not be presented as production-only visitor traffic.

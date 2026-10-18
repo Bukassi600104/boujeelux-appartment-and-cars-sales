@@ -2,9 +2,8 @@
 import { adminIdentity } from "@/lib/cms/access";
 import { getContent } from "@/lib/cms/store";
 import { CmsDashboard } from "@/components/cms-dashboard";
-import {CmsLogout} from "@/components/cms-auth";
 import {redirect} from "next/navigation";
 import type { Metadata } from "next";
 export const dynamic="force-dynamic";
 export const metadata:Metadata={title:"Content management | Chida Moore",robots:{index:false,follow:false}};
-export default async function Admin(){const user=await adminIdentity();if(!user)redirect("/admin/login");if(user.mustChange)redirect("/admin/credentials");return <main id="main-content" className="cms-shell"><header className="cms-header"><div><p className="section-kicker">Chida Moore Automobiles</p><h1>Content management</h1><p>{user.username} · Authorized website administrator</p></div><nav><a href="/" target="_blank" rel="noopener noreferrer">View website ↗</a><CmsLogout/></nav></header><CmsDashboard initial={await getContent()}/></main>;}
+export default async function Admin(){const user=await adminIdentity();if(!user)redirect("/admin/login");if(user.mustChange)redirect("/admin/credentials");return <main id="main-content" className="cms-shell"><CmsDashboard username={user.username} initial={await getContent()}/></main>;}
