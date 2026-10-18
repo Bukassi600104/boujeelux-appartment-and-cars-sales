@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, CarFront, FileText, MessageCircle, Search } from "lucide-react";
 import { ServiceArt, StoryIcon } from "@/components/service-art";
+import { useSiteContent } from "@/components/cms-provider";
 
 const services = [
   { title: "Carefully selected vehicles", short: "The selection", icon: CarFront, heading: "A collection worth exploring.", copy: "Explore our available vehicles through their photographs and individual galleries. Find the model that feels right for your next journey.", detail: "Available vehicles · Individual galleries", link: "/inventory", action: "Explore the collection", scene: "selection" },
@@ -11,6 +12,7 @@ const services = [
 ] as const;
 
 export function ServiceShowcase() {
+  const {contact}=useSiteContent();
   const [active, setActive] = useState(0);
   const [entered, setEntered] = useState(false);
   const [inView, setInView] = useState(false);
@@ -41,7 +43,7 @@ export function ServiceShowcase() {
           <div className={`service-visual scene-${service.scene}`} key={`${service.scene}-${entered}`} aria-hidden="true">
             <ServiceArt scene={service.scene}/>
           </div>
-          <div className="service-panel-copy" key={service.title}><p className="service-detail">{service.detail}</p><h3>{service.heading}</h3><p>{service.copy}</p><a href={service.link} {...(service.scene === "conversation" ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{service.action}<ArrowUpRight size={18}/></a></div>
+          <div className="service-panel-copy" key={service.title}><p className="service-detail">{service.detail}</p><h3>{service.heading}</h3><p>{service.copy}</p><a href={service.scene==="conversation"?contact.whatsapp[0].href:service.link} {...(service.scene === "conversation" ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{service.action}<ArrowUpRight size={18}/></a></div>
         </div>
       </div>
     </div>

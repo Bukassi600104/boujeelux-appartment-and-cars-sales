@@ -1,14 +1,13 @@
 "use client";
-/* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element */
+
 
 import { useMemo, useState } from "react";
 import type { Vehicle } from "@/lib/vehicles";
 import { VehicleCard } from "@/components/vehicle-card";
 
-const filters = ["All", "Lexus", "Mercedes-Benz", "Toyota"] as const;
-
 export function InventoryList({ vehicles }: { vehicles: Vehicle[] }) {
-  const [selectedMake, setSelectedMake] = useState<(typeof filters)[number]>("All");
+  const filters = useMemo(() => ["All", ...new Set(vehicles.map(vehicle => vehicle.make))], [vehicles]);
+  const [selectedMake, setSelectedMake] = useState("All");
   const [query, setQuery] = useState("");
   const visibleVehicles = useMemo(
     () => vehicles.filter(vehicle => (selectedMake === "All" || vehicle.make === selectedMake) && vehicle.name.toLowerCase().includes(query.trim().toLowerCase())),

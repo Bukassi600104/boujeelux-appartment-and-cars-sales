@@ -5,8 +5,19 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { SourcingForm } from "@/components/sourcing-form";
 import { ScrollEntrances } from "@/components/scroll-entrances";
+import { getPublicContent } from "@/lib/cms/store";
+import { getPublicSiteUrl, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Vehicle Sourcing | Chida Moore Automobiles", description: "Create a personal vehicle brief, share your model and budget, and explore your next car with Chida Moore Automobiles." };
+export async function generateMetadata(): Promise<Metadata> {
+  const { settings } = await getPublicContent();
+  return pageMetadata(
+    "/sourcing",
+    "Vehicle Sourcing | Chida Moore Automobiles",
+    "Create a personal vehicle brief and discuss the make, model, budget and preferences you have in mind with Chida Moore Automobiles.",
+    settings.heroImage,
+    getPublicSiteUrl(settings),
+  );
+}
 
 export default function SourcingPage() {
   return <main className="inner-page editorial-service-page" id="main-content"><SiteHeader /><ScrollEntrances />

@@ -1,0 +1,1 @@
+export async function GET(){return Response.json({error:'Production CMS is not configured. No remote content access is available.'},{status:503,headers:{'Cache-Control':'no-store'}});}export const POST=GET;export const PUT=GET;export const DELETE=GET;

@@ -2,14 +2,22 @@ import type { Metadata } from "next";
 import { InventoryList } from "@/components/inventory-list";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { vehicles } from "@/lib/vehicles";
+import { getPublicContent } from "@/lib/cms/store";
+import { getPublicSiteUrl, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Vehicle Inventory | Chida Moore Automobiles",
-  description: "Browse all available Tokunbo Lexus, Mercedes-Benz and Toyota vehicles from Chida Moore Automobiles.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { settings } = await getPublicContent();
+  return pageMetadata(
+    "/inventory",
+    "Vehicle Inventory | Chida Moore Automobiles",
+    "Browse the current published vehicle inventory from Chida Moore Automobiles, with available prices, photographs and vehicle details.",
+    settings.heroImage,
+    getPublicSiteUrl(settings),
+  );
+}
 
-export default function InventoryPage() {
+export default async function InventoryPage() {
+  const { vehicles } = await getPublicContent();
   return <main className="inner-page inventory-page" id="main-content">
     <SiteHeader />
     <header className="inventory-page-hero">

@@ -1,5 +1,5 @@
 "use client";
-/* eslint-disable @next/next/no-html-link-for-pages */
+/* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element -- Pre-optimized transparent WebP brand asset. */
 
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";

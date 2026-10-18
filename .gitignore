@@ -44,6 +44,14 @@ next-env.d.ts
 /.codex/
 /outputs/
 /work/
+/.cms-private/
+/supabase/.temp/
+**/node_modules/
+**/.next/
+**/.vercel/
+**/asset-sources/
+**/evidence/
+**/*.zip
 # Local previews, source-image provenance and reference exports
 /.openai/previews/
 /.openai/photo-retouch-manifest.json

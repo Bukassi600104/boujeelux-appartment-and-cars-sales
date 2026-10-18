@@ -1,0 +1,1 @@
+import {redirect} from 'next/navigation';import {cmsSession} from '@/lib/cms-server';import {CredentialsForm} from '@/components/auth-forms';export default async function Page(){const session=await cmsSession();if(!session)redirect('/admin/login');if(!session.mustChange)redirect('/admin');return <CredentialsForm currentUsername={session.username}/>;}

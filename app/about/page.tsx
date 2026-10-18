@@ -1,16 +1,27 @@
-/* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element */
 import type { Metadata } from "next";
 import { AtSign, Mail, MessageCircle, Phone } from "lucide-react";
 import { AboutHero } from "@/components/service-heroes";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { contact } from "@/lib/vehicles";
+import { getPublicContent } from "@/lib/cms/store";
+import { getPublicSiteUrl, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title:"About | Chida Moore Automobiles", description:"Learn about Chida Moore Automobiles and contact our vehicle sales team." };
+export async function generateMetadata(): Promise<Metadata> {
+  const { settings } = await getPublicContent();
+  return pageMetadata(
+    "/about",
+    "About | Chida Moore Automobiles",
+    "Learn about Chida Moore Automobiles, our approach to vehicle selection and how to contact the sales team.",
+    settings.heroImage,
+    getPublicSiteUrl(settings),
+  );
+}
 
-export default function AboutPage(){
+export default async function AboutPage(){
+  const { settings } = await getPublicContent();
+  const { contact } = settings;
   return <main className="inner-page" id="main-content"><SiteHeader />
-    <AboutHero />
+    <AboutHero title={settings.aboutTitle} introduction={settings.aboutText} />
     <section className="about-principles"><header><p className="section-kicker">Our approach</p><h2>Considered at every step.</h2></header><div className="value-list"><article><h3>Selection</h3><p>A focused collection of vehicles shown with the images and information available to us.</p></article><article><h3>Clarity</h3><p>Direct answers, clear vehicle information and inspection arrangements confirmed per vehicle.</p></article><article><h3>Personal service</h3><p>A sales conversation shaped around the vehicle you want and the next step you are ready to take.</p></article></div></section>
     <section className="about-services"><div><p className="section-kicker">How we help</p><h2>Available stock and tailored sourcing.</h2></div><div><article><h3>Available inventory</h3><p>Browse the current selection, open each vehicle page and review its real gallery before contacting the team.</p></article><article><h3>Vehicle sourcing</h3><p>Tell us the make, model and preferences you have in mind. We can help you explore suitable options beyond the current collection.</p></article></div></section>
     <section className="contact-directory" aria-labelledby="contact-heading"><div><p className="section-kicker">Contact</p><h2 id="contact-heading">Speak with the team.</h2><p>Call, WhatsApp or email Chida Moore Automobiles about an available vehicle or sourcing request.</p></div><div className="contact-grid">

@@ -1,0 +1,5 @@
+const ENDPOINT="https://vcnqpzhzhttfejarkfud.supabase.co/functions/v1/dual-cms";
+export const SITE="chida" as const;
+export class CmsRemoteError extends Error{constructor(message:string,public status:number){super(message);this.name="CmsRemoteError";}}
+export async function cmsRequest<T>(action:string,payload:Record<string,unknown>={},token?:string):Promise<T>{const safe={...payload};delete safe.site;delete safe.action;delete safe.token;const response=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({...safe,site:SITE,action,...(token?{token}:{} )}),cache:"no-store"});const data=await response.json().catch(()=>({error:"CMS service returned an unreadable response."})) as T&{error?:string};if(!response.ok)throw new CmsRemoteError(data.error||"CMS service request failed.",response.status);return data;}
+export function cmsError(error:unknown){const status=error instanceof CmsRemoteError?error.status:502;const message=error instanceof Error?error.message:"CMS service is unavailable.";return Response.json({error:message},{status,headers:{"Cache-Control":"no-store"}});}

@@ -4,8 +4,19 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { InspectionRequest } from "@/components/inspection-request";
 import { ScrollEntrances } from "@/components/scroll-entrances";
+import { getPublicContent } from "@/lib/cms/store";
+import { getPublicSiteUrl, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Vehicle Inspection | Chida Moore Automobiles", description: "Prepare for a closer look, explore vehicle inspection questions and discuss an inspection with the Chida Moore team." };
+export async function generateMetadata(): Promise<Metadata> {
+  const { settings } = await getPublicContent();
+  return pageMetadata(
+    "/inspection",
+    "Vehicle Inspection | Chida Moore Automobiles",
+    "Prepare for a closer look at a vehicle and discuss inspection arrangements with the Chida Moore Automobiles team.",
+    settings.heroImage,
+    getPublicSiteUrl(settings),
+  );
+}
 export default function InspectionPage() {
   return <main className="inner-page editorial-service-page" id="main-content"><SiteHeader /><ScrollEntrances />
     <InspectionHero />

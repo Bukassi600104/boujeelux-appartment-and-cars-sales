@@ -2,7 +2,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, CarFront, Check, MapPin, MessageCircle } from "lucide-react";
-import { contact } from "@/lib/vehicles";
+import { useSiteContent } from "@/components/cms-provider";
+import { EnquiryLink } from "@/components/enquiry-link";
 import { featuredScenes } from "@/lib/featured-scenes";
 import { imageSources, imageVariant } from "@/lib/image-presentation";
 
@@ -17,6 +18,7 @@ const ideas = [
 const findIdea = (value: string) => ideas.find(idea => idea.model.toLowerCase() === value.trim().toLowerCase());
 
 export function SourcingForm() {
+  const {contact,settings}=useSiteContent();
   const [step, setStep] = useState(1);
   const [model, setModel] = useState("");
   const [type, setType] = useState("SUV");
@@ -44,6 +46,8 @@ export function SourcingForm() {
   const vehicleStyle = type === "Other" ? otherStyle || "Other / open to guidance" : type;
   const message = ["Hello, I would like help sourcing a vehicle.", `Make and model: ${model.trim()}`, `Vehicle type: ${vehicleStyle}`, `Budget: ${budget.trim() || "Please discuss with me"}`, `Preferences: ${[...selected, preferences.trim()].filter(Boolean).join("; ") || "Please discuss with me"}`].join("\n");
 
+  if (!settings.sourcingEnabled) return <div className="service-request-form" role="status"><h3>Vehicle sourcing is currently unavailable.</h3><p>Please browse the available inventory or contact the team for assistance.</p></div>;
+
   return <div className="sourcing-experience">
     <aside className="source-editorial" aria-label="Your personal vehicle search">
       {ideas.map(idea => <img key={idea.slug} className={`source-model-photo ${preview?.slug === idea.slug ? "is-active" : ""}`} src={imageVariant(featuredScenes[idea.slug].src, 960)} srcSet={imageSources(featuredScenes[idea.slug].src)} sizes="(max-width:820px) calc(100vw - 48px), 40vw" decoding="async" alt={preview?.slug === idea.slug ? `${idea.model} in a cinematic ${featuredScenes[idea.slug].location}, Lagos setting` : ""} aria-hidden={preview?.slug !== idea.slug} width="1000" height="1250" loading="lazy" />)}
@@ -70,7 +74,7 @@ export function SourcingForm() {
         <fieldset><legend>What matters most? <span>Choose any</span></legend><div className="source-priorities">{priorities.map(item => <button key={item} type="button" aria-pressed={selected.includes(item)} onClick={() => setSelected(current => current.includes(item) ? current.filter(value => value !== item) : [...current, item])}>{selected.includes(item) && <Check size={12} aria-hidden="true" />}{item}</button>)}</div></fieldset><p className="source-field-note">Choose what matters to you. Add any specific requirements below.</p>
         <label htmlFor="source-preferences">Anything else? <span>Optional</span></label><textarea id="source-preferences" name="preferences" value={preferences} onChange={event => setPreferences(event.target.value)} placeholder="Preferred year, colour, features or a specific detail…" rows={2} maxLength={500} />
       </div>}
-      <div className="source-form-bottom">{step === 1 ? <button className="gold-button" type="submit">Fine-tune my search <ArrowRight size={17} aria-hidden="true" /></button> : <><button className="source-back" type="button" onClick={() => changeStep(1)}><ArrowLeft size={15} aria-hidden="true" /> Back</button><a className="gold-button" href={`${contact.whatsapp[0].href}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={16} aria-hidden="true" /> Review on WhatsApp <ArrowUpRight size={16} aria-hidden="true" /></a></>}
+      <div className="source-form-bottom">{step === 1 ? <button className="gold-button" type="submit">Fine-tune my search <ArrowRight size={17} aria-hidden="true" /></button> : <><button className="source-back" type="button" onClick={() => changeStep(1)}><ArrowLeft size={15} aria-hidden="true" /> Back</button><EnquiryLink className="gold-button" href={`${contact.whatsapp[0].href}?text=${encodeURIComponent(message)}`} message={message} type="Sourcing"><MessageCircle size={16} aria-hidden="true" /> Review on WhatsApp <ArrowUpRight size={16} aria-hidden="true" /></EnquiryLink></>}
         <p>{step === 1 ? "Two simple steps. A conversation tailored to you." : "Your brief opens in WhatsApp. Review it before you send."}</p>
       </div>
     </form>
