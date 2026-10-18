@@ -1,6 +1,6 @@
 import type {Metadata} from 'next';
 
-const fallbackSiteUrl='https://boujeelux-apartments.vercel.app';
+const fallbackSiteUrl='https://boujeelux-apartments-bukassi-gmailcoms-projects.vercel.app';
 
 export function siteUrl(){
   const configured=process.env.NEXT_PUBLIC_SITE_URL||process.env.SITE_URL||fallbackSiteUrl;

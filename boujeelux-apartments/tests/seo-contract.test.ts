@@ -10,7 +10,7 @@ test('public metadata is indexable and has the configured production base',async
   const helper=await readFile(new URL('lib/seo.ts',root),'utf8');
   assert.match(helper,/NEXT_PUBLIC_SITE_URL/);
   assert.match(helper,/SITE_URL/);
-  assert.match(helper,/https:\/\/boujeelux-apartments\.vercel\.app/);
+  assert.match(helper,/https:\/\/boujeelux-apartments-bukassi-gmailcoms-projects\.vercel\.app/);
   assert.match(source,/metadataBase:new URL\(siteUrl\(\)\)/);
   assert.match(source,/robots:\{index:true,follow:true\}/);
 });
