@@ -1,0 +1,3 @@
+# Keep static WebP responses correctly typed on the retained Workers host.
+/*.webp
+  Content-Type: image/webp
