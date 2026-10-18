@@ -1,3 +1,6 @@
+import trackedAssets from "./cms/assets.json" with { type: "json" };
+
+const availableAssets = new Set<string>(trackedAssets);
 const smallerSources: Record<string, number> = {
   "/inventory/lexus-lx600.webp": 570,
   "/inventory/lexus-rx350-2017.webp": 570,
@@ -5,12 +8,22 @@ const smallerSources: Record<string, number> = {
   "/vehicles/2017-lexus-rx-350/cabin.jpeg": 810,
 };
 
-export function imageVariant(src: string, size: 480 | 960 | "thumb") {
+function optimizedVariant(src: string, size: 480 | 960 | "thumb") {
   return `/optimized/${size}${src.replace(/\.(jpe?g|png|webp)$/i, ".webp")}`;
 }
 
+export function imageVariant(src: string, size: 480 | 960 | "thumb") {
+  const variant = optimizedVariant(src, size);
+  return availableAssets.has(variant) ? variant : src;
+}
+
 export function imageSources(src: string) {
-  return `${imageVariant(src, 480)} 480w, ${imageVariant(src, 960)} ${smallerSources[src] ?? 960}w`;
+  return ([480, 960] as const).flatMap(size => {
+    const variant = optimizedVariant(src, size);
+    return availableAssets.has(variant)
+      ? [`${variant} ${size === 480 ? 480 : smallerSources[src] ?? 960}w`]
+      : [];
+  }).join(", ");
 }
 
 // Focal points are calibrated to the photographed vehicle, rather than the sky or road.
