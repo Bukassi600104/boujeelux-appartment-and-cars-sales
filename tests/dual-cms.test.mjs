@@ -107,3 +107,117 @@ test('guard migration locks sessions and gates all mutable database operations',
   assert.match(sql,/delete from public\.cms_rate_limits where reset_at<=now\(\)/i);
   assert.match(sql,/revoke all on function[\s\S]+from public,anon,authenticated/i);
 });
+
+const carSettings={heroTitle:'Premium cars',heroSubtitle:'Trusted vehicles',heroImage:'/hero.webp',heroVehicleSlug:'',aboutTitle:'About Chida',aboutText:'A trusted automotive team.',seoTitle:'Chida Moore Automobiles',seoDescription:'Premium vehicles available in Lagos.',siteUrl:'https://cars.example.com/',inspectionEnabled:true,sourcingEnabled:true,contact:{whatsapp:[{display:'WhatsApp one',href:'https://wa.me/2348000000001'},{display:'WhatsApp two',href:'https://wa.me/2348000000002'}],phones:[{display:'Phone one',href:'tel:+2348000000001'},{display:'Phone two',href:'tel:+2348000000002'},{display:'Phone three',href:'tel:+2348000000003'}],emails:['one@example.com','two@example.com'],instagram:'https://instagram.com/chida'}};
+const car=(overrides={})=>({slug:'lexus-rx',name:'Lexus RX',make:'Lexus',year:'2024',image:'/lexus.webp',alt:'Lexus RX exterior',availability:'Available',condition:'Tokunbo',price:'Price on enquiry',priceValue:0,showPrice:false,status:'published',featured:false,description:'',specifications:[],videos:[],gallery:[{src:'/lexus.webp',alt:'Lexus RX exterior',label:'Exterior'}],...overrides});
+const apartment=(photo={src:'/flat.webp',alt:'Living room',illustrative:false})=>({id:'lagos-flat',slug:'lagos-flat',name:'Lagos Flat',subtitle:'',description:'Comfortable apartment',location:'Lagos',address:'',partyRate:'',caution:'',policy:'',availabilityNote:'',bedrooms:1,maxGuests:2,availability:'Available on request',amenities:[],rate:{basis:'quote',currency:'NGN',amount:''},photos:[photo]});
+
+test('car public projection redacts hidden numeric prices without mutating private content',()=>{
+  const hidden=car({priceValue:42_500_000,showPrice:false,price:'Price on enquiry'});
+  const shown=car({slug:'priced-car',priceValue:51_000_000,showPrice:true,price:'₦51,000,000'});
+  const privateContent={vehicles:[hidden,shown],settings:structuredClone(carSettings)};
+  const projected=api.publicProjection('chida',privateContent);
+  assert.equal(projected.vehicles[0].priceValue,0);
+  assert.equal(projected.vehicles[0].price,'Price on enquiry');
+  assert.equal(projected.vehicles[1].priceValue,51_000_000);
+  assert.equal(privateContent.vehicles[0].priceValue,42_500_000);
+  assert.doesNotThrow(()=>api.validateContent('chida',structuredClone(projected)));
+});
+
+test('repository sanitizes legacy stored public car documents on read',async()=>{
+  const stored={vehicles:[car({priceValue:42_500_000,showPrice:false,price:'Price on enquiry'})],settings:structuredClone(carSettings)};
+  const query={select(){return this;},eq(){return this;},async single(){return {data:{published:stored,revision:7,updated_at:'2026-10-18T00:00:00Z'},error:null};}};
+  const db={from(name){assert.equal(name,'cms_documents');return query;}};
+  const {SupabaseRepository}=await import('../shared-cms/repository.mjs');
+  const repo=new SupabaseRepository(db,()=>{throw new Error('unused');});
+  const result=await repo.content('chida',true);
+  assert.equal(result.content.vehicles[0].priceValue,0);
+  assert.equal(result.content.vehicles[0].price,'Price on enquiry');
+  assert.equal(stored.vehicles[0].priceValue,42_500_000);
+});
+
+test('legacy vehicles default restockExpected false and Unavailable remains independent of publication', () => {
+  const legacy=api.validateContent('chida',{vehicles:[car()],settings:structuredClone(carSettings)});
+  assert.equal(legacy.vehicles[0].restockExpected,false);
+  const unavailable=api.validateContent('chida',{vehicles:[car({availability:'Unavailable',restockExpected:true})],settings:structuredClone(carSettings)});
+  assert.equal(unavailable.vehicles[0].status,'published');
+  assert.equal(api.publicProjection('chida',unavailable).vehicles[0].availability,'Unavailable');
+  assert.throws(()=>api.validateContent('chida',{vehicles:[car({restockExpected:'yes'})],settings:structuredClone(carSettings)}),/classification/i);
+  assert.throws(()=>api.validateContent('chida',{vehicles:[car({availability:'Available',restockExpected:true})],settings:structuredClone(carSettings)}),/restock/i);
+  assert.throws(()=>api.validateContent('chida',{vehicles:[car({availability:'Reserved',restockExpected:true})],settings:structuredClone(carSettings)}),/restock/i);
+});
+
+test('legacy apartment photos remain valid while optional labels are trimmed and bounded', () => {
+  const legacy=api.validateContent('boujeelux',{records:[{id:'lagos-flat',version:1,draft:apartment(),published:null}]});
+  assert.equal('label' in legacy.records[0].draft.photos[0],false);
+  const labelled=api.validateContent('boujeelux',{records:[{id:'lagos-flat',version:1,draft:apartment({src:'/flat.webp',alt:'Living room',illustrative:false,label:'  Living room  '}),published:null}]});
+  assert.equal(labelled.records[0].draft.photos[0].label,'Living room');
+  assert.throws(()=>api.validateContent('boujeelux',{records:[{id:'lagos-flat',version:1,draft:apartment({src:'/flat.webp',alt:'Living room',illustrative:false,label:' '}),published:null}]}),/photographs/i);
+  assert.throws(()=>api.validateContent('boujeelux',{records:[{id:'lagos-flat',version:1,draft:apartment({src:'/flat.webp',alt:'Living room',illustrative:false,label:'x'.repeat(101)}),published:null}]}),/photographs/i);
+});
+
+test('trackChat accepts only general or currently published listing slugs and ignores no caller count', async () => {
+  const {createHandler}=await import('../shared-cms/core.mjs');
+  const tracked=[];
+  const repo={limit:async()=>true,content:async(site)=>site==='chida'?{content:{vehicles:[car(),car({slug:'hidden',status:'draft'})]}}:{content:{records:[{published:apartment()}]}},trackChat:async(site,slug)=>{tracked.push([site,slug]);return {ok:true};}};
+  const handler=createHandler(repo);
+  const post=(body,forwarded='198.51.100.7')=>handler(new Request('https://cms.test/',{method:'POST',headers:{'content-type':'application/json','x-forwarded-for':forwarded},body:JSON.stringify(body)}));
+  assert.equal((await post({site:'chida',action:'trackChat',listingSlug:''})).status,201);
+  assert.equal((await post({site:'chida',action:'trackChat',listingSlug:'lexus-rx'})).status,201);
+  assert.equal((await post({site:'boujeelux',action:'trackChat',listingSlug:'lagos-flat'})).status,201);
+  assert.equal((await post({site:'chida',action:'trackChat',listingSlug:'hidden'})).status,404);
+  assert.equal((await post({site:'chida',action:'trackChat',listingSlug:'lexus-rx',count:99})).status,400);
+  assert.equal((await post({site:'chida',action:'trackChat',listingSlug:'../other'})).status,400);
+  assert.deepEqual(tracked,[['chida',''],['chida','lexus-rx'],['boujeelux','lagos-flat']]);
+});
+
+test('trackChat is rate limited with bounded source keys', async () => {
+  const {createHandler,rateLimitKeys}=await import('../shared-cms/core.mjs');
+  const keys=await rateLimitKeys('trackChat','chida','', '203.0.113.8, 198.51.100.10');
+  assert.ok(keys.every(({key})=>/^chat:(global|source:\d{1,4}):chida$/.test(key)));
+  const handler=createHandler({limit:async key=>!key.startsWith('chat:source:'),content:async()=>({content:{vehicles:[]}}),trackChat:async()=>({ok:true})});
+  const response=await handler(new Request('https://cms.test/',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({site:'chida',action:'trackChat',listingSlug:''})}));
+  assert.equal(response.status,429);
+});
+
+test('metrics requires a full same-site session and returns site-scoped aggregates', async () => {
+  const {createHandler,sha256}=await import('../shared-cms/core.mjs');
+  const token='m'.repeat(43),hash=await sha256(token),calls=[];
+  const account={site:'chida',state:'active',must_change:false,epoch:1,username:'owner',user_id:'user'};
+  const session={site:'chida',scope:'full',epoch:1,token_hash:hash,expires_at:new Date(Date.now()+600000).toISOString(),last_seen:new Date().toISOString(),account};
+  const repo={session:async()=>session,touch:async()=>{},metrics:async(site,sessionHash)=>{calls.push([site,sessionHash]);return {total:3,byListing:[{listingSlug:'lexus-rx',count:3}]};}};
+  const handler=createHandler(repo);
+  const post=site=>handler(new Request('https://cms.test/',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({site,action:'metrics',token})}));
+  assert.deepEqual(await (await post('chida')).json(),{total:3,byListing:[{listingSlug:'lexus-rx',count:3}]});
+  assert.equal((await post('boujeelux')).status,401);
+  session.scope='setup';session.account.must_change=true;
+  assert.equal((await post('chida')).status,428);
+  assert.deepEqual(calls,[['chida',hash]]);
+});
+
+test('repository chat metrics use server-side aggregate RPCs without accepting a count', async () => {
+  const {SupabaseRepository}=await import('../shared-cms/repository.mjs');
+  const calls=[];
+  const db={rpc:async(name,args)=>{calls.push([name,args]);return {data:name==='cms_chat_metrics'?{authorized:true,total:2,byListing:[{listingSlug:'',count:2}]}:true,error:null};}};
+  const repo=new SupabaseRepository(db,()=>{});
+  assert.deepEqual(await repo.trackChat('chida','lexus-rx'),{ok:true});
+  assert.deepEqual(await repo.metrics('chida','a'.repeat(64)),{total:2,byListing:[{listingSlug:'',count:2}]});
+  assert.deepEqual(calls,[['cms_track_chat',{p_site:'chida',p_slug:'lexus-rx'}],['cms_chat_metrics',{p_site:'chida',p_hash:'a'.repeat(64)}]]);
+});
+
+test('chat metric migration uses atomic day buckets, retention, session guards and service-only access', async () => {
+  const {readdir,readFile}=await import('node:fs/promises');
+  const directory=new URL('../supabase/migrations/',import.meta.url);
+  const names=(await readdir(directory)).filter(name=>name.endsWith('_cms_chat_metrics.sql'));
+  assert.equal(names.length,1,'create the migration with `supabase migration new cms_chat_metrics`');
+  const sql=await readFile(new URL(names[0],directory),'utf8');
+  assert.match(sql,/create table public\.cms_chat_clicks/i);
+  assert.match(sql,/primary key \(site,listing_slug,day\)/i);
+  assert.match(sql,/on conflict \(site,listing_slug,day\)[\s\S]*count=public\.cms_chat_clicks\.count\+1/i);
+  assert.match(sql,/delete from public\.cms_chat_clicks where day</i);
+  assert.match(sql,/public\.cms_lock_session\(p_site,p_hash\)/i);
+  assert.match(sql,/enable row level security/i);
+  assert.match(sql,/revoke all on (table )?public\.cms_chat_clicks from public,anon,authenticated/i);
+  assert.match(sql,/revoke all on function[\s\S]+from public,anon,authenticated/i);
+  assert.match(sql,/grant execute on function[\s\S]+to service_role/i);
+});

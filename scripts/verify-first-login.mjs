@@ -15,12 +15,16 @@ for(const a of accounts.filter(a=>!selected.length||selected.includes(a.site))){
  const cookie=r.headers.get('set-cookie')?.split(';')[0];assert.ok(cookie);assert.ok(/HttpOnly/i.test(r.headers.get('set-cookie')??''));assert.ok(/SameSite=Strict/i.test(r.headers.get('set-cookie')??''));
  r=await call('/admin','GET',null,cookie);assert.equal(r.status,307);assert.match(r.headers.get('location'),/\/admin\/credentials$/);
  r=await call(content,car?'GET':'POST',car?null:{},cookie);assert.equal(r.status,428,'setup session cannot access content');
- const username=a.site+'-qa-final',password=randomBytes(24).toString('base64url');
- r=await call(rotate,car?'PUT':'POST',{currentPassword:a.nextPassword,username,password,acknowledged:true},cookie);assert.equal(r.status,200,`${a.site}: credential change`);const result=await r.json();assert.ok(!('token' in result));assert.match(r.headers.get('set-cookie')??'',/Max-Age=0/i,'rotation must clear browser session');
+ const previousUsername=a.nextUsername,previousPassword=a.nextPassword;
+ const username=a.site+'-qa-'+randomBytes(4).toString('hex'),password=randomBytes(24).toString('base64url');
+ r=await call(rotate,car?'PUT':'POST',{currentPassword:previousPassword,username,password,acknowledged:true},cookie);assert.equal(r.status,200,`${a.site}: credential change`);
+ // Persist the successful QA rotation before later assertions can fail.
+ a.nextUsername=username;a.nextPassword=password;delete a.fullToken;await writeFile(file,JSON.stringify(accounts),{mode:0o600});
+ const result=await r.json();assert.ok(!('token' in result));assert.match(r.headers.get('set-cookie')??'',/Max-Age=0/i,'rotation must clear browser session');
  r=await call('/admin','GET');assert.equal(r.status,307);assert.match(r.headers.get('location'),/\/admin\/login$/,'rotation must not create dashboard access');
  r=await call(content,car?'GET':'POST',car?null:{},cookie);assert.equal(r.status,401,'old cookie must be revoked');
- r=await call(login,'POST',{username:a.nextUsername,password:a.nextPassword});assert.equal(r.status,401,'old credentials must fail');
- a.nextUsername=username;a.nextPassword=password;delete a.fullToken;await writeFile(file,JSON.stringify(accounts),{mode:0o600});
+ r=await call(login,'POST',{username:previousUsername,password:previousPassword});assert.ok([401,429].includes(r.status),'old identity must be rejected, including when throttled');
+ r=await call(login,'POST',{username,password:previousPassword});assert.equal(r.status,401,'the old password must fail with the new username');
  r=await call(login,'POST',{username,password});assert.equal(r.status,200,'new login');assert.equal((await r.json()).mustChange,false);
  const fullCookie=r.headers.get('set-cookie')?.split(';')[0];r=await call('/admin','GET',null,fullCookie);assert.equal(r.status,200,'dashboard with new login');
  await call(car?'/api/admin/session':'/api/cms/logout',car?'DELETE':'POST',car?null:{},fullCookie);

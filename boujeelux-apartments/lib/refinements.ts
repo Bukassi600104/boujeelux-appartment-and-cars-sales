@@ -1,0 +1,7 @@
+import type {Apartment} from './domain';
+
+export function createApartmentDraft(id:string):Apartment{return{id,slug:id,name:'New apartment',subtitle:'A considered place to stay.',description:'Add the confirmed property description before saving this draft.',bedrooms:1,maxGuests:null,location:'Egbeda, Lagos',address:'',amenities:[],photos:[],rate:{amount:'',basis:'quote',currency:''},partyRate:'',caution:'',policy:'',availability:'Ask about dates',availabilityNote:'Availability is confirmed personally by the team.'};}
+export function parseRecentSlugs(value:string|null){if(!value)return[];try{const parsed=JSON.parse(value);if(!Array.isArray(parsed))return[];return [...new Set(parsed.filter((item):item is string=>typeof item==='string'&&item.length>0&&item.length<=100))].slice(0,8);}catch{return[];}}
+export function pushRecentSlug(current:string[],slug:string,limit=4){return[slug,...current.filter(item=>item!==slug)].slice(0,limit);}
+export function validListingSlug(value:unknown):value is string{return typeof value==='string'&&(value===''||(/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)&&value.length<=100));}
+export function chatContextForClick(pathname:string,href:string,publishedSlugs:string[]){let track=false;try{const url=new URL(href,'https://boujeelux.invalid');track=url.hostname==='wa.me'||url.hostname==='api.whatsapp.com';}catch{}if(!track)return{track:false,listingSlug:''};const routeSlug=pathname.match(/^\/apartments\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/)?.[1]||'';return{track:true,listingSlug:publishedSlugs.includes(routeSlug)?routeSlug:''};}

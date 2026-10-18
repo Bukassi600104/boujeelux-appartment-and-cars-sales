@@ -2,7 +2,7 @@ export type VehicleImage = { src: string; alt: string; label: string };
 export type Vehicle = {
   slug: string; name: string; make: string; year: string; image: string; cutout?: string; alt: string;
   availability: string; condition: "Tokunbo" | "Nigerian used" | "New"; price: string; priceValue: number; gallery: VehicleImage[];
-  featuredImage?:string; description?:string; specifications?:{label:string;value:string}[]; videos?:string[]; featured?:boolean; status?:"published"|"draft"|"archived"; showPrice?:boolean;
+  featuredImage?:string; description?:string; specifications?:{label:string;value:string}[]; videos?:string[]; featured?:boolean; status?:"published"|"draft"|"archived"; showPrice?:boolean; restockExpected?:boolean;
 };
 
 const existingGallery = (lead: VehicleImage, slug: string, entries: [string, string, string][]) => [

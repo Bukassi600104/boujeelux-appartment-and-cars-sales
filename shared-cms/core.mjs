@@ -12,9 +12,13 @@ export async function rateLimitKeys(kind,site,identity='',forwarded=''){
   {key:`login:account:${await boundedBucket(identity,1024)}:${site}`,limit:30,seconds:900},
   {key:`login:pair:${await boundedBucket(`${identity}\0${gateway}`,1024)}:${site}`,limit:5,seconds:900},
  ];
- return [
+ if(kind==='enquire')return [
   {key:`enquire:global:${site}`,limit:1000,seconds:60},
   {key:`enquire:source:${await boundedBucket(gateway,1024)}:${site}`,limit:10,seconds:60},
+ ];
+ return [
+  {key:`chat:global:${site}`,limit:5000,seconds:60},
+  {key:`chat:source:${await boundedBucket(gateway,1024)}:${site}`,limit:30,seconds:60},
  ];
 }
 async function enforceLimits(repo,entries,message){for(const entry of entries)if(!await repo.limit(entry.key,entry.limit,entry.seconds))throw new CmsError(message,429);}
@@ -37,6 +41,7 @@ export function createHandler(repo){return async function handle(request){try{
  if(action==='bootstrap'){const name=username(b.username),pass=password(b.password);if(typeof b.bootstrapToken!=='string'||! /^[A-Za-z0-9_-]{43}$/.test(b.bootstrapToken))throw new CmsError('Invalid setup authorization.',403);const claim=await repo.claimBootstrap(await sha256(b.bootstrapToken),site);if(!claim)throw new CmsError('Invalid or expired setup authorization.',403);await repo.provision(site,name,pass);return json({ok:true},201);}
  if(action==='login'){let name;try{name=username(b.username);}catch{throw new CmsError('Invalid username or password.',401);}if(typeof b.password!=='string'||new TextEncoder().encode(b.password).length>72)throw new CmsError('Invalid username or password.',401);await enforceLimits(repo,await rateLimitKeys('login',site,name,request.headers.get('x-forwarded-for')),'Too many attempts. Please wait 15 minutes.');const account=await repo.account(site,name);const valid=await repo.verifyPassword(account,b.password);if(!valid||!account||account.state!=='active')throw new CmsError('Invalid username or password.',401);const token=randomToken();await repo.createSession(account,await sha256(token));return json({token,mustChange:account.must_change,username:account.username});}
  if(action==='enquire'){await enforceLimits(repo,await rateLimitKeys('enquire',site,'',request.headers.get('x-forwarded-for')),'Please wait a minute before another enquiry.');const payload=b.payload;if(!payload||typeof payload!=='object'||Array.isArray(payload)||JSON.stringify(payload).length>6000)throw new CmsError('Invalid enquiry.');if(site==='chida'){if(!['Sales','Sourcing','Inspection'].includes(b.type)||typeof payload.message!=='string'||payload.message.trim().length<5||payload.message.length>2500)throw new CmsError('Invalid enquiry.');const {content}=await repo.content(site,true);if(b.type==='Inspection'&&content?.settings.inspectionEnabled===false||b.type==='Sourcing'&&content?.settings.sourcingEnabled===false)throw new CmsError('This service is currently paused.',409);}else if(b.type!=='Apartment')throw new CmsError('Invalid enquiry.');return json(await repo.enquire(site,b.type,payload),201);}
+ if(action==='trackChat'){if(typeof b.listingSlug!=='string'||b.listingSlug.length>100||b.listingSlug!==''&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(b.listingSlug)||Object.hasOwn(b,'count'))throw new CmsError('Invalid chat activity.');await enforceLimits(repo,await rateLimitKeys('trackChat',site,'',request.headers.get('x-forwarded-for')),'Too many chat actions. Please wait a minute.');if(b.listingSlug){const {content}=await repo.content(site,true);const exists=site==='chida'?content?.vehicles?.some(v=>v.slug===b.listingSlug&&(!v.status||v.status==='published')):content?.records?.some(r=>r.published?.slug===b.listingSlug);if(!exists)throw new CmsError('Listing not found.',404);}return json(await repo.trackChat(site,b.listingSlug),201);}
  const session=await authorizeSession(repo,site,b.token,['session','rotate','logout'].includes(action));const account=session.account;
  if(action==='session')return json({username:account.username,mustChange:account.must_change});
  if(action==='logout'){await repo.logout(session.token_hash);return json({ok:true});}
@@ -47,5 +52,7 @@ export function createHandler(repo){return async function handle(request){try{
  if(action==='mediaList')return json(await repo.mediaList(site));
  if(action==='enquiries')return json(await repo.enquiries(site));
  if(action==='status'){if(typeof b.id!=='string'||! /^[a-f0-9-]{36}$/.test(b.id)||!['New','Contacted','Pending confirmation','Confirmed','Closed'].includes(b.status))throw new CmsError('Invalid enquiry status.');return json(await repo.status(site,b.id,b.status,account.user_id,session.token_hash));}
- if(action==='audit')return json(await repo.audit(site));throw new CmsError('Unknown CMS action.',404);
+ if(action==='audit')return json(await repo.audit(site));
+ if(action==='metrics')return json(await repo.metrics(site,session.token_hash));
+ throw new CmsError('Unknown CMS action.',404);
  }catch(error){if(error instanceof CmsError)return json({error:error.message},error.status);return json({error:'CMS service is temporarily unavailable. Please try again.'},503);}};}

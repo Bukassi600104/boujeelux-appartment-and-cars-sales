@@ -1,10 +1,10 @@
 // Tests issued credentials without consuming the client's first-login rotation.
 import {readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const clients=JSON.parse(await readFile('.cms-private/clients.json','utf8'));
+const clients=JSON.parse(await readFile(process.env.CMS_SETUP_FILE??'.cms-private/client-handover.json','utf8'));
 for(const a of clients){
  const car=a.site==='chida';
- const base=car?(process.env.CHIDA_TEST_URL??'http://localhost:5174'):(process.env.BOUJEELUX_TEST_URL??'http://localhost:5180');
+ const base=car?(process.env.CHIDA_TEST_URL??'http://localhost:5173'):(process.env.BOUJEELUX_TEST_URL??'http://localhost:5180');
  const request=(path,method,body,cookie)=>fetch(base+path,{method,redirect:'manual',headers:{Origin:base,...(cookie?{Cookie:cookie}:{}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
  let r=await request(car?'/api/admin/session':'/api/cms/login','POST',{username:a.username,password:a.password});
  assert.equal(r.status,200,`${a.site}: issued account sign-in`);const result=await r.json();assert.equal(result.mustChange,true);assert.ok(!('token'in result));

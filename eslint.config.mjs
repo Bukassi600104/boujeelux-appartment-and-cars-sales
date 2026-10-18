@@ -9,6 +9,9 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    "dist/**",
+    // This is a separate application with its own ESLint config and checks.
+    "boujeelux-apartments/**",
     ".openai/previews/**",
     ".stitch-reference/**",
     ".sites-runtime/**",

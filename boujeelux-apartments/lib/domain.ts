@@ -1,6 +1,6 @@
 import {residencePhotos,studioPhotos} from './property-photos';
 export type Rate = { amount: string; basis: 'night'|'week'|'month'|'pending'|'quote'; currency: string };
-export type Photo = {src:string; alt:string; illustrative:boolean; scope?:'property-wide'};
+export type Photo = {src:string; alt:string; illustrative:boolean; scope?:'property-wide';label?:string};
 export type Apartment = { id:string; slug:string; name:string; subtitle:string; description:string; bedrooms:number; maxGuests:number|null; location:string; address:string; amenities:string[]; photos:Photo[]; rate:Rate; partyRate:string; caution:string; policy:string; availability:'Ask about dates'|'Available on request'|'Unavailable'; availabilityNote:string };
 export type RecordEntry={id:string;version:number;draft:Apartment;published:Apartment|null};
 export type Catalog={records:RecordEntry[]};
@@ -20,6 +20,7 @@ if(a.maxGuests!==null&&(!Number.isInteger(a.maxGuests)||a.maxGuests<1||a.maxGues
 for(const amount of [a.rate.amount,a.partyRate,a.caution])if(amount&&(!/^\d+(\.\d{1,2})?$/.test(amount)||Number(amount)<=0))errors.push('Rates must be positive amounts, or left empty for a quote.');
 if(a.photos.length<1||a.photos.length>12)errors.push('Use between 1 and 12 photos.');
 if(a.photos.some(p=>p.scope!==undefined&&p.scope!=='property-wide'))errors.push('Use a supported photograph scope.');
+if(a.photos.some(p=>p.label!==undefined&&(typeof p.label!=='string'||!p.label.trim()||p.label.trim().length>100)))errors.push('Photo labels must contain 1–100 characters.');
 if(a.photos.some(p=>!p.alt.trim()||!(/^\/(?:images\/[a-z0-9-]+\.(?:webp|png|jpg)|api\/media\/[a-z0-9-]+\.(?:webp|png|jpe?g))$/.test(p.src)||/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.src))))errors.push('Every photo needs descriptive alt text and a supported local image.');
 return errors;
 }
@@ -60,7 +61,7 @@ function storedApartment(value:unknown):value is Apartment{
   if(!strings.every(key=>typeof value[key]==='string')||!value.id)return false;
   if(typeof value.bedrooms!=='number'||!(value.maxGuests===null||typeof value.maxGuests==='number'))return false;
   if(!Array.isArray(value.amenities)||!value.amenities.every(a=>typeof a==='string'))return false;
-  if(!Array.isArray(value.photos)||!value.photos.every(p=>objectValue(p)&&typeof p.src==='string'&&typeof p.alt==='string'&&typeof p.illustrative==='boolean'))return false;
+  if(!Array.isArray(value.photos)||!value.photos.every(p=>objectValue(p)&&typeof p.src==='string'&&typeof p.alt==='string'&&typeof p.illustrative==='boolean'&&(p.label===undefined||typeof p.label==='string')))return false;
   if(!objectValue(value.rate)||typeof value.rate.amount!=='string'||typeof value.rate.currency!=='string'||!['night','week','month','pending','quote'].includes(String(value.rate.basis)))return false;
   if(!['Ask about dates','Available on request','Unavailable'].includes(String(value.availability)))return false;
   return validateApartment(value as unknown as Apartment).length===0;

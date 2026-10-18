@@ -9,11 +9,11 @@ const image = z.object({ src: imageUrl, alt: z.string().min(1).max(250), label: 
 export const vehicleSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(100), name: z.string().trim().min(3).max(140), make: z.string().trim().min(1).max(50), year: z.string().regex(/^(19|20)\d{2}$/),
   image: imageUrl, cutout: optionalImage, featuredImage: optionalImage, alt: z.string().min(1).max(250),
-  availability: z.enum(["Available", "Reserved", "Sold"]), condition: z.enum(["Tokunbo", "Nigerian used", "New"]), priceValue: z.number().finite().min(0).max(10000000000), price: z.string().max(60), showPrice: z.boolean().default(true),
+  availability: z.enum(["Available", "Reserved", "Sold", "Unavailable"]), restockExpected:z.boolean().default(false), condition: z.enum(["Tokunbo", "Nigerian used", "New"]), priceValue: z.number().finite().min(0).max(10000000000), price: z.string().max(60), showPrice: z.boolean().default(true),
   status: z.enum(["published", "draft", "archived"]).default("published"), featured: z.boolean().default(true),
   description: z.string().max(4000).default(""), specifications: z.array(z.object({label:z.string().trim().min(1).max(80),value:z.string().trim().min(1).max(300)})).max(30).default([]),
   videos: z.array(videoUrl).max(5).default([]), gallery: z.array(image).min(1).max(40),
-});
+}).superRefine((vehicle,ctx)=>{if(vehicle.restockExpected&&!(["Sold","Unavailable"] as string[]).includes(vehicle.availability))ctx.addIssue({code:"custom",path:["restockExpected"],message:"Available soon can only be confirmed for sold or unavailable vehicles"});});
 export type CmsVehicle = z.infer<typeof vehicleSchema>;
 const phone = z.object({ display:z.string().min(5).max(40),href:z.string().regex(/^tel:\+?\d{7,15}$/) });
 const whatsapp = z.object({ display:z.string().min(5).max(40),href:z.string().regex(/^https:\/\/wa\.me\/\d{7,15}$/) });
