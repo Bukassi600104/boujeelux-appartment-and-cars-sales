@@ -4,6 +4,15 @@ Supersedes the earlier ChatGPT/local-D1 test setup. Both CMSs now use separate S
 
 Temporary credentials are delivered only in the ignored local `.cms-private/CLIENT-CMS-ACCESS.txt` file after provisioning and verification. Never commit that file or chosen client passwords.
 
+Verified client login links:
+
+- Chida Moore Automobiles: https://boujeelux-appartment-and-cars-sales.vercel.app/admin/login
+- Boujeelux Apartments: https://boujeelux-apartments.vercel.app/admin/login
+
+The public websites do not require platform sign-in. CMS credentials are independent; do not use the developer's ChatGPT, Google, Vercel or GitHub account.
+
+The existing branded Chida URL remains available. Use the preferred Vercel link above for client testing; the verification report records a generic WebP MIME header on the branded host, despite working browser image rendering.
+
 1. Open the appropriate verified website's `/admin/login`.
 2. Sign in using that CMS's temporary username and password.
 3. Replace BOTH username and password; acknowledge the warning to save and secure the new credentials.
